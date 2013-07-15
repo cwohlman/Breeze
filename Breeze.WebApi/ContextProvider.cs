@@ -182,6 +182,7 @@ namespace Breeze.WebApi {
     protected EntityInfo CreateEntityInfoFromJson(dynamic jo, Type entityType, JsonSerializer jsonSerializer) {
       var entityInfo = CreateEntityInfo();
 
+      entityInfo.JEntity = jo;
       entityInfo.Entity = jsonSerializer.Deserialize(new JTokenReader(jo), entityType);
       entityInfo.EntityState = (EntityState)Enum.Parse(typeof(EntityState), (String)jo.entityAspect.entityState);
 
@@ -267,6 +268,7 @@ namespace Breeze.WebApi {
 
   public class SaveOptions {
     public bool AllowConcurrentSaves { get; set; }
+    public bool EnablePartialUpdates { get; set; }
     public Object Tag { get; set; }
   }
 
@@ -312,6 +314,7 @@ namespace Breeze.WebApi {
     }
 
     public Object Entity { get; internal set; }
+    public dynamic JEntity { get; internal set; }
     public EntityState EntityState { get; internal set; }
     public Dictionary<String, Object> OriginalValuesMap { get; internal set; }
     public bool ForceUpdate { get; set; }

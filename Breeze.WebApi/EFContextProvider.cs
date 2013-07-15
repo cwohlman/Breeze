@@ -268,6 +268,12 @@ namespace Breeze.WebApi {
       //}
       
       if ((int) entry.State != (int) EntityState.Modified || entityInfo.ForceUpdate) {
+        if (SaveOptions.EnablePartialUpdates)
+        {
+            var serializer = new JsonSerializer();
+            ObjectContext.Refresh(System.Data.Objects.RefreshMode.StoreWins, entry.Entity);
+            serializer.Populate(new JTokenReader(entityInfo.JEntity), entry.Entity);
+        }
         // _originalValusMap can be null if we mark entity.SetModified but don't actually change anything.
         entry.ChangeState(System.Data.EntityState.Modified);
       }
