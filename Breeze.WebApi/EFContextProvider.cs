@@ -221,6 +221,13 @@ namespace Breeze.WebApi {
       });
     }
 
+    private static JsonSerializer CreateJsonSerializer()
+    {
+        var serializerSettings = BreezeConfig.Instance.GetJsonSerializerSettings();
+        var jsonSerializer = JsonSerializer.Create(serializerSettings);
+        return jsonSerializer;
+    }
+
     private IKeyGenerator GetKeyGenerator() {
       var generatorType = KeyGeneratorType.Value;
       return (IKeyGenerator)Activator.CreateInstance(generatorType, GetDbConnection());
@@ -235,6 +242,8 @@ namespace Breeze.WebApi {
       } else if (entityInfo.EntityState == EntityState.Deleted) {
         // for 1st pass this does NOTHING 
         ose = HandleDeletedPart1(entityInfo);
+      } else if (entityInfo.EntityState == EntityState.Either) {
+          ose = HandleEither(entityInfo);
       } else {
         // needed for many to many to get both ends into the objectContext
         ose = HandleUnchanged(entityInfo);
@@ -270,7 +279,7 @@ namespace Breeze.WebApi {
       if ((int) entry.State != (int) EntityState.Modified || entityInfo.ForceUpdate) {
         if (SaveOptions.EnablePartialUpdates)
         {
-            var serializer = new JsonSerializer();
+            var serializer = CreateJsonSerializer();
             ObjectContext.Refresh(System.Data.Objects.RefreshMode.StoreWins, entry.Entity);
             serializer.Populate(new JTokenReader(entityInfo.JEntity), entry.Entity);
         }
@@ -280,6 +289,43 @@ namespace Breeze.WebApi {
       return entry;
     }
 
+    private ObjectStateEntry HandleEither(EFEntityInfo entityInfo)
+    {      
+        var entry = AddObjectStateEntry(entityInfo);
+      // EntityState will be changed to modified during the update from the OriginalValuesMap
+      // Do NOT change this to EntityState.Modified because this will cause the entire record to update.
+      
+      entry.ChangeState(System.Data.EntityState.Unchanged);
+
+      // updating the original values is necessary under certain conditions when we change a foreign key field
+      // because the before value is used to determine ordering.
+      UpdateOriginalValues(entry, entityInfo);
+
+      //foreach (var dep in GetModifiedComplexTypeProperties(entity, metadata)) {
+      //  entry.SetModifiedProperty(dep.Name);
+      //}
+      try
+      {
+          ObjectContext.Refresh(System.Data.Objects.RefreshMode.ClientWins, entry.Entity);
+          if ((int)entry.State != (int)EntityState.Modified || entityInfo.ForceUpdate)
+          {
+              if (SaveOptions.EnablePartialUpdates)
+              {
+                  var serializer = CreateJsonSerializer();
+                  ObjectContext.Refresh(System.Data.Objects.RefreshMode.StoreWins, entry.Entity);
+                  serializer.Populate(new JTokenReader(entityInfo.JEntity), entry.Entity);
+              }
+              // _originalValusMap can be null if we mark entity.SetModified but don't actually change anything.
+              entry.ChangeState(System.Data.EntityState.Modified);
+          }
+      }
+      catch (InvalidOperationException)
+      {
+          entry.ChangeState(System.Data.EntityState.Added);
+      }
+      return entry;
+    }
+    
     private ObjectStateEntry HandleUnchanged(EFEntityInfo entityInfo) {
       var entry = AddObjectStateEntry(entityInfo);
       entry.ChangeState(System.Data.EntityState.Unchanged);

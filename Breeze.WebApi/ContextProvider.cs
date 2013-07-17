@@ -301,12 +301,14 @@ namespace Breeze.WebApi {
   }
 
   [Flags]
-  public enum EntityState {
-    Detached = 1,
-    Unchanged = 2,
-    Added = 4,
-    Deleted = 8,
-    Modified = 16,
+  public enum EntityState
+  {
+      Detached = 1,
+      Unchanged = 2,
+      Added = 4,
+      Deleted = 8,
+      Modified = 16,
+      Either = 32,
   }
 
   public class EntityInfo {
