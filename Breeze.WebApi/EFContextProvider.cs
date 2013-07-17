@@ -242,7 +242,7 @@ namespace Breeze.WebApi {
       } else if (entityInfo.EntityState == EntityState.Deleted) {
         // for 1st pass this does NOTHING 
         ose = HandleDeletedPart1(entityInfo);
-      } else if (entityInfo.EntityState == EntityState.Either) {
+      } else if (entityInfo.EntityState == EntityState.AddedOrModified) {
           ose = HandleEither(entityInfo);
       } else {
         // needed for many to many to get both ends into the objectContext

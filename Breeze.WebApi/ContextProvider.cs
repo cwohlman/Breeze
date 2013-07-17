@@ -308,7 +308,7 @@ namespace Breeze.WebApi {
       Added = 4,
       Deleted = 8,
       Modified = 16,
-      Either = 32,
+      AddedOrModified = 32,
   }
 
   public class EntityInfo {
