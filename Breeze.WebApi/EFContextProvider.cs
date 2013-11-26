@@ -225,6 +225,8 @@ namespace Breeze.WebApi {
     {
         var serializerSettings = BreezeConfig.Instance.GetJsonSerializerSettings();
         var jsonSerializer = JsonSerializer.Create(serializerSettings);
+        //jsonSerializer.DateTimeZoneHandling = DateTimeZoneHandling.Local;
+        //jsonSerializer.Converters.Add(new TimeSpanConverter()
         return jsonSerializer;
     }
 
@@ -277,16 +279,30 @@ namespace Breeze.WebApi {
       //}
       
       if ((int) entry.State != (int) EntityState.Modified || entityInfo.ForceUpdate) {
-        if (SaveOptions.EnablePartialUpdates)
-        {
-            var serializer = CreateJsonSerializer();
-            ObjectContext.Refresh(System.Data.Objects.RefreshMode.StoreWins, entry.Entity);
-            serializer.Populate(new JTokenReader(entityInfo.JEntity), entry.Entity);
-        }
+          HandlePartialUpdates(entityInfo, entry);
         // _originalValusMap can be null if we mark entity.SetModified but don't actually change anything.
         entry.ChangeState(System.Data.EntityState.Modified);
       }
       return entry;
+    }
+
+    private void HandlePartialUpdates(EFEntityInfo entityInfo, ObjectStateEntry entry)
+    {
+        if (SaveOptions.EnablePartialUpdates)
+        {
+            var serializer = CreateJsonSerializer();
+            ObjectContext.Refresh(System.Data.Objects.RefreshMode.StoreWins, entry.Entity);
+            try
+            {
+                serializer.Populate(new JTokenReader(entityInfo.JEntity), entry.Entity);
+            }
+            catch (InvalidOperationException)
+            {
+                var exception = new InvalidOperationException("Can't update an entity because it doesn't exist");
+                
+                throw exception;
+            }
+        }
     }
 
     private ObjectStateEntry HandleEither(EFEntityInfo entityInfo)
@@ -309,12 +325,7 @@ namespace Breeze.WebApi {
           ObjectContext.Refresh(System.Data.Objects.RefreshMode.ClientWins, entry.Entity);
           if ((int)entry.State != (int)EntityState.Modified || entityInfo.ForceUpdate)
           {
-              if (SaveOptions.EnablePartialUpdates)
-              {
-                  var serializer = CreateJsonSerializer();
-                  ObjectContext.Refresh(System.Data.Objects.RefreshMode.StoreWins, entry.Entity);
-                  serializer.Populate(new JTokenReader(entityInfo.JEntity), entry.Entity);
-              }
+              HandlePartialUpdates(entityInfo, entry);
               // _originalValusMap can be null if we mark entity.SetModified but don't actually change anything.
               entry.ChangeState(System.Data.EntityState.Modified);
           }
@@ -444,6 +455,8 @@ namespace Breeze.WebApi {
       if (val == null) return val;
       if (toType == val.GetType()) return val;
       
+      toType = Nullable.GetUnderlyingType(toType) ?? toType;
+
       if (typeof (IConvertible).IsAssignableFrom(toType)) {
         result = Convert.ChangeType(val, toType, System.Threading.Thread.CurrentThread.CurrentCulture);
       } else if (val is JObject) {

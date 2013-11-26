@@ -146,6 +146,8 @@ namespace Breeze.WebApi {
       }
 
       var value = serializer.Deserialize<String>(reader);
+      try { return TimeSpan.Parse((string)value); }
+      catch (Exception) { }
       return XmlConvert.ToTimeSpan(value);
     }
 
