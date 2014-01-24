@@ -77,7 +77,7 @@ namespace Breeze.WebApi {
     // Note: look at BuildManager.GetReferencedAssemblies if we start having
     // issues with Assemblies not yet having been loaded.
     public static Lazy<List<Assembly>> ProbeAssemblies = new Lazy<List<Assembly>>( () => 
-      AppDomain.CurrentDomain.GetAssemblies().Where(a => !IsFrameworkAssembly(a)).ToList()
+        System.Web.Compilation.BuildManager.GetReferencedAssemblies().Cast<Assembly>().Where(a => !IsFrameworkAssembly(a)).ToList()
     );
 
     public static bool IsFrameworkAssembly(Assembly assembly) {
