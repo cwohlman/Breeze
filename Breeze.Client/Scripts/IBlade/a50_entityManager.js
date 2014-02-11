@@ -2308,7 +2308,24 @@ var EntityManager = (function () {
         unwrapInstance: unwrapInstance,
         unwrapOriginalValues: unwrapOriginalValues,
         unwrapChangedValues: unwrapChangedValues,
-        getEntityKeyFromRawEntity: getEntityKeyFromRawEntity
+        getEntityKeyFromRawEntity: getEntityKeyFromRawEntity,
+		visitAndMerge: visitAndMerge
+    };
+    proto._mergeEntities = function (entities, resourceName) {
+        var dataService = breeze.DataService.resolve([this.dataService]);
+        var mappingContext = {
+            query: resourceName,
+            dataService: dataService,
+            entityManager: this,
+            queryOptions: this.queryOptions,
+            refMap: {},
+            url: "",
+            deferedFns: []
+        };
+        var nodeContext = {nodeType: "root"};
+        return entities.map(function (node) {
+            return visitAndMerge(node, mappingContext, nodeContext);
+        });
     };
     
    
