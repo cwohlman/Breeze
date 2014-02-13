@@ -1,15 +1,5 @@
-﻿"use strict";
-(function (factory) {
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"] && !breeze) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+﻿
+
     
     var core = breeze.core;
 
@@ -211,4 +201,4 @@
 
     breeze.config.registerAdapter("modelLibrary", ctor);
 
-}));
+

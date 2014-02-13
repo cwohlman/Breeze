@@ -6,20 +6,7 @@
  * Author: Jay Traband
  */
 
-(function (definition) {
-
-    // CommonJS
-    if (typeof exports === "object") {
-        module.exports = definition();
-        // RequireJS
-    } else if (typeof define === "function") {
-        define(definition);
-        // <script>
-    } else {
-        breeze = definition();
-    }
-
-})(function () {  
+define(['knockout', 'Q'], function (ko, Q) {  
     var breeze = {
         version: "1.3.6",
         metadataVersion: "1.0.5"
@@ -13285,7 +13272,24 @@ var EntityManager = (function () {
         unwrapInstance: unwrapInstance,
         unwrapOriginalValues: unwrapOriginalValues,
         unwrapChangedValues: unwrapChangedValues,
-        getEntityKeyFromRawEntity: getEntityKeyFromRawEntity
+        getEntityKeyFromRawEntity: getEntityKeyFromRawEntity,
+		visitAndMerge: visitAndMerge
+    };
+    proto._mergeEntities = function (entities, resourceName) {
+        var dataService = breeze.DataService.resolve([this.dataService]);
+        var mappingContext = {
+            query: resourceName,
+            dataService: dataService,
+            entityManager: this,
+            queryOptions: this.queryOptions,
+            refMap: {},
+            url: "",
+            deferedFns: []
+        };
+        var nodeContext = {nodeType: "root"};
+        return entities.map(function (node) {
+            return visitAndMerge(node, mappingContext, nodeContext);
+        });
     };
     
    
@@ -13762,19 +13766,7 @@ breeze.AbstractDataServiceAdapter = (function () {
     return ctor;
 
 })();
-// needs JQuery
-(function(factory) {
-    // Module systems magic dance.
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"]) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+
     var core = breeze.core;
     
     var jQuery;
@@ -13807,18 +13799,8 @@ breeze.AbstractDataServiceAdapter = (function () {
     // last param is true because for now we only have one impl.
     breeze.config.registerAdapter("ajax", ctor);
     
-}));
-(function (factory) {
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"] && !breeze) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+
+
     
     var core = breeze.core;
  
@@ -14070,19 +14052,9 @@ breeze.AbstractDataServiceAdapter = (function () {
 
     breeze.config.registerAdapter("dataService", ctor);
 
-}));
 
-(function(factory) {
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"] && !breeze) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+
+
     
     var core = breeze.core;
 
@@ -14163,19 +14135,8 @@ breeze.AbstractDataServiceAdapter = (function () {
     
     breeze.config.registerAdapter("dataService", ctor);
 
-}));
-"use strict";
-(function (factory) {
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"] && !breeze) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+
+
     
     var core = breeze.core;
     var ComplexAspect = breeze.ComplexAspect;
@@ -14368,19 +14329,9 @@ breeze.AbstractDataServiceAdapter = (function () {
 
     // private methods
 
-}));
-"use strict";
-(function (factory) {
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"] && !breeze) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+
+
+
     
     var core = breeze.core;
 
@@ -14582,19 +14533,9 @@ breeze.AbstractDataServiceAdapter = (function () {
 
     breeze.config.registerAdapter("modelLibrary", ctor);
 
-}));
-"use strict";
-(function (factory) {
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"] && !breeze) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+
+
+
     
     var core = breeze.core;
     var ko;
@@ -14604,7 +14545,6 @@ breeze.AbstractDataServiceAdapter = (function () {
     };
 
     ctor.prototype.initialize = function () {
-        ko = core.requireLib("ko", "The Knockout library");
         ko.extenders.intercept = function(target, interceptorOptions) {
             var instance = interceptorOptions.instance;
             var property = interceptorOptions.property;
@@ -14761,24 +14701,13 @@ breeze.AbstractDataServiceAdapter = (function () {
 
     breeze.config.registerAdapter("modelLibrary", ctor);
     
-}));
+
 
 // set defaults
 // will no longer fail at initialization time if jQuery is not found.
 breeze.config.initializeAdapterInstances( { dataService: "webApi", ajax: "jQuery" });
 
-var ko = __requireLibCore("ko");
-
-if (ko) {
-    breeze.config.initializeAdapterInstance("modelLibrary", "ko");
-} else {
-    breeze.config.initializeAdapterInstance("modelLibrary", "backingStore");
-}
-
-if (this.window) {
-    this.window.breeze = breeze;
-}
-
+breeze.config.initializeAdapterInstance("modelLibrary", "ko");
 
 return breeze;
 });

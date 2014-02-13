@@ -1,16 +1,4 @@
-﻿// needs JQuery
-(function(factory) {
-    // Module systems magic dance.
-    if (breeze) {
-        factory(breeze);
-    } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
-        // CommonJS or Node: hard-coded dependency on "breeze"
-        factory(require("breeze"));
-    } else if (typeof define === "function" && define["amd"]) {
-        // AMD anonymous module with hard-coded dependency on "breeze"
-        define(["breeze"], factory);
-    }
-}(function(breeze) {
+﻿
     var core = breeze.core;
     
     var jQuery;
@@ -43,4 +31,4 @@
     // last param is true because for now we only have one impl.
     breeze.config.registerAdapter("ajax", ctor);
     
-}));
+
